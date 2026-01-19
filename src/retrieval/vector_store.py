@@ -1,8 +1,11 @@
 """Vector store manager for Pinecone and ChromaDB."""
 
 from typing import List, Dict, Any, Optional
+import logging
 import os
 import uuid
+
+logger = logging.getLogger(__name__)
 
 
 class VectorStoreManager:
@@ -104,7 +107,7 @@ class VectorStoreManager:
                 ids=[doc_id],
                 embeddings=[embedding],
                 documents=[text],
-                metadatas=[metadata] if metadata else None
+                metadatas=[metadata or {}]
             )
 
         return doc_id
@@ -163,12 +166,11 @@ class VectorStoreManager:
         client = await self._get_client()
 
         try:
-            if self.backend == "pinecone":
-                client.delete(ids=[doc_id])
-            else:
-                client.delete(ids=[doc_id])
+            client.delete(ids=[doc_id])
+            logger.debug(f"Deleted document {doc_id} from {self.backend}")
             return True
-        except Exception:
+        except Exception as e:
+            logger.error(f"Failed to delete document {doc_id}: {e}")
             return False
 
     async def get_stats(self) -> Dict[str, Any]:
